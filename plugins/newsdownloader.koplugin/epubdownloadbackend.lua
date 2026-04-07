@@ -43,6 +43,8 @@ local FeedCache = CacheSQLite:new{
     size = 1024 * 1024 * 10, -- 10MB
 }
 
+local HTMLPARSER_PARSE_LIMIT = 50000
+
 ---Returns user specified or default options.
 ---@param user table
 ---@param default table
@@ -132,10 +134,22 @@ end
 ---@return string
 local function reduceHTML(input_html, user_wanted_elements, user_unwanted_elements)
     local htmlparser = require("htmlparser")
-    local root = htmlparser.parse(input_html, 5000)
+    local root = htmlparser.parse(input_html, HTMLPARSER_PARSE_LIMIT)
+    if not root then
+        logger.warn("NewsDownloader: htmlparser could not parse page, skipping filter")
+        return input_html
+    end
 
     local wanted_node = selectMatchingNode(root, user_wanted_elements)
+    if not wanted_node then
+        logger.warn("NewsDownloader: no matching node found, skipping filter")
+        return input_html
+    end
     local cleaned_inner_html = removeUnwantedNodes(wanted_node, user_unwanted_elements)
+    if not cleaned_inner_html or cleaned_inner_html == "" then
+        logger.warn("NewsDownloader: filter generated empty content, keeping original HTML")
+        return input_html
+    end
     local output_html = "<!DOCTYPE html><html><head></head><body>" .. cleaned_inner_html .. "</body></html>"
 
     return output_html
