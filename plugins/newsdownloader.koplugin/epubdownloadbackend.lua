@@ -146,7 +146,7 @@ local function reduceHTML(input_html, user_wanted_elements, user_unwanted_elemen
         return input_html
     end
     local cleaned_inner_html = removeUnwantedNodes(wanted_node, user_unwanted_elements)
-    if not cleaned_inner_html or cleaned_inner_html == "" then
+    if not cleaned_inner_html or cleaned_inner_html:match("^%s*$") then
         logger.warn("NewsDownloader: filter generated empty content, keeping original HTML")
         return input_html
     end
