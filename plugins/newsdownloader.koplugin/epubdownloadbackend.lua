@@ -15,6 +15,9 @@ local _ = require("gettext")
 local T = ffiutil.template
 
 local function removeSubstring(str, substr)
+    if type(substr) ~= "string" or substr == "" then
+        return str
+    end
     local iter = 1
     local i, j
     repeat
@@ -50,7 +53,13 @@ local HTMLPARSER_PARSE_LIMIT = 50000
 ---@param default table
 ---@return table
 local function userOrDefault(user, default)
-    if type(user) == "table" and next(user) == nil then
+    if type(user) == "string" then
+        local normalized = user:match("^%s*(.-)%s*$")
+        if normalized ~= "" then
+            return { normalized }
+        end
+        return default
+    elseif type(user) == "table" and next(user) == nil then
         return default
     else
         return user
@@ -118,8 +127,17 @@ local function removeUnwantedNodes(wanted_node, user_unwanted_selectors)
         if unwanted_nodes then
             for _,unwanted_node in ipairs(unwanted_nodes) do
                 logger.dbg("removing", unwanted_selector)
+                local unwanted_html = unwanted_node:getcontent()
+                if unwanted_html and unwanted_html ~= "" then
+                    node_content = removeSubstring(node_content, unwanted_html)
+                end
                 local unwanted_text = unwanted_node:gettext()
-                node_content = removeSubstring(node_content, unwanted_text)
+                if type(unwanted_text) == "string"
+                    and unwanted_text ~= ""
+                    and node_content:find(unwanted_text, 1, true)
+                then
+                    node_content = removeSubstring(node_content, unwanted_text)
+                end
             end
         end
     end
