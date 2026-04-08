@@ -132,7 +132,10 @@ local function removeUnwantedNodes(wanted_node, user_unwanted_selectors)
                     node_content = removeSubstring(node_content, unwanted_html)
                 end
                 local unwanted_text = unwanted_node:gettext()
-                if unwanted_text and unwanted_text ~= unwanted_html then
+                if type(unwanted_text) == "string"
+                    and unwanted_text ~= ""
+                    and node_content:find(unwanted_text, 1, true)
+                then
                     node_content = removeSubstring(node_content, unwanted_text)
                 end
             end
