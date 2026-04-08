@@ -264,7 +264,10 @@ local function parseCommaSeparatedOption(opt)
     if type(opt) == "string" then
         local result = {}
         for part in string.gmatch(opt, "([^,]+)") do
-            table.insert(result, part)
+            local normalized = part:match("^%s*(.-)%s*$")
+            if normalized ~= "" then
+                table.insert(result, normalized)
+            end
         end
         return result
     end
